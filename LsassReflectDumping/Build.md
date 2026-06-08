@@ -7,7 +7,7 @@
 **Option A — x64 Native Tools Command Prompt for VS 2022:**
 
 ```cmd
-cd testlab-enterprise\windows-adversary-plan\resources\payloads\LsassReflectDumping\ReflectDump
+cd LsassReflectDumping\ReflectDump
 msbuild ReflectDump.sln /p:Configuration=Release /p:Platform=x64 /m
 ```
 
@@ -18,14 +18,14 @@ $vs  = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe
            -latest -products * -requires Microsoft.Component.MSBuild `
            -property installationPath
 $msb = Join-Path $vs 'MSBuild\Current\Bin\MSBuild.exe'
-& $msb 'testlab-enterprise\windows-adversary-plan\resources\payloads\LsassReflectDumping\ReflectDump\ReflectDump.sln' `
+& $msb 'LsassReflectDumping\ReflectDump\ReflectDump.sln' `
        /p:Configuration=Release /p:Platform=x64 /m
 ```
 
 **Option C — devenv (GUI build from CLI):**
 
 ```cmd
-devenv testlab-enterprise\windows-adversary-plan\resources\payloads\LsassReflectDumping\ReflectDump\ReflectDump.sln /Build "Release|x64"
+devenv LsassReflectDumping\ReflectDump\ReflectDump.sln /Build "Release|x64"
 ```
 
 ## Options
