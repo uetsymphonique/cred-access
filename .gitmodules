@@ -4,3 +4,6 @@
 [submodule "impacket"]
 	path = impacket
 	url = https://github.com/fortra/impacket
+[submodule "mimikatz"]
+	path = mimikatz
+	url = https://github.com/ParrotSec/mimikatz
