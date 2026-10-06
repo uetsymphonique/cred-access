@@ -1,6 +1,6 @@
 # LsassReflectDumping
 
-**Purpose:** Dump LSASS credentials via process reflection — serves Phase 2 (Credential Access) of the IIS apppool escalation path (T1003.001).
+**Purpose:** Standalone LSASS credential dump utility (T1003.001) using process reflection.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Instead of the classic `OpenProcess(lsass.exe) → MiniDumpWriteDump` pattern, t
 
 ## Target context
 
-- **Host / OS / arch:** IIS01 — Windows Server 2022, x64
+- **Host / OS / arch:** Windows Server 2022+ / Windows 10+, x64
 - **Privilege required:** SYSTEM or Administrator (elevated token)
 
 ## Usage
@@ -19,7 +19,7 @@ Instead of the classic `OpenProcess(lsass.exe) → MiniDumpWriteDump` pattern, t
 # stdout: C:\Users\<user>\AppData\Local\Temp\~DFA1B2.tmp
 ```
 
-Decrypt offline with the shared XOR decoder (same scheme as NtdsRawDump and CWLHerpaderping):
+Decrypt offline with the bundled XOR decoder (same linear-position-XOR scheme as the sibling tools in this bundle, e.g. ../NtdsRawDump/):
 
 ```python
 import sys

@@ -22,4 +22,4 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o credvault.exe .
 ## Output
 
 - **Artifact:** `credvault.exe` (~1.5 MB stripped)
-- **Dev-env verify:** `.\credvault.exe` (no args → usage text, exit 2). Do **not** run `enum`/`read`/`dump` in the dev environment — they touch the local credential vault and are lab-only behavior.
+- **Dev-env verify:** `.\credvault.exe` (no args → usage text, exit 2). Do **not** run `enum`/`read`/`dump` outside an authorized test environment — these touch the local credential vault.

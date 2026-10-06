@@ -1,0 +1,6 @@
+[submodule "ShadowDumper"]
+	path = ShadowDumper
+	url = https://github.com/Offensive-Panda/ShadowDumper
+[submodule "impacket"]
+	path = impacket
+	url = https://github.com/fortra/impacket

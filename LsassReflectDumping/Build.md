@@ -1,6 +1,6 @@
 # LsassReflectDumping — Build
 
-**Toolchain:** MSVC 14.x (Visual Studio 2022, v143 toolset, Desktop development with C++ workload, Windows 10/11 SDK) — see `plan-for-agent/guides/cli-execution.md`
+**Toolchain:** MSVC 14.x (Visual Studio 2022, v143 toolset, Desktop development with C++ workload, Windows 10/11 SDK)
 
 ## Build
 
@@ -47,7 +47,7 @@ msbuild ReflectDump.sln /t:Clean /p:Configuration=Release /p:Platform=x64
 
 ## Dev-env verify
 
-Run after each build before deploying to the lab:
+Run after each build before deploying to the target environment:
 
 ```cmd
 :: 1. dbghelp.dll must NOT appear — it is resolved at runtime via LoadLibraryA
@@ -56,7 +56,7 @@ dumpbin /imports ReflectDump\x64\Release\ReflectDump.exe | findstr /i dbghelp
 :: 2. VS_VERSION_INFO from ReflectDump.rc must be present
 dumpbin /headers ReflectDump\x64\Release\ReflectDump.exe | findstr /i "version"
 
-:: 3. Lab Defender scan before deployment
+:: 3. Per-module Defender scan before deployment (MpCmdRun.exe -Scan -ScanType 3)
 "%ProgramFiles%\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "%CD%\ReflectDump\x64\Release\ReflectDump.exe"
 ```
 
